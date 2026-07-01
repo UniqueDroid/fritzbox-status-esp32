@@ -577,6 +577,11 @@ void setupPortalRoutes() {
   });
 
   auto eraseAllAndReboot = []() {
+    // Custom routes bypass WiFiManager's built-in page handlers, so they don't
+    // get the session/menu-password gate for free. Apply it explicitly here.
+    if (!wm.handleRequest()) {
+      return;
+    }
     BOOTLOG("[BOOT] Factory erase requested\n");
     wm.server->send(200, "text/html", "<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{font-family:verdana;text-align:center;padding:18px}.wm-brand{display:flex;justify-content:center;align-items:center;min-height:64px;margin:4px 0 10px 0}.wm-brand-logo{display:block;max-width:min(100%,320px);height:auto;margin:0 auto}</style></head><body><div class='wm-brand'><img class='wm-brand-logo' src='/project-logo.png' alt='Project logo'></div><p><strong>Config erased. Rebooting...</strong></p></body></html>");
     wm.server->client().stop();
@@ -591,6 +596,9 @@ void setupPortalRoutes() {
   wm.server->on("/factory-erase", HTTP_POST, eraseAllAndReboot);
 
   wm.server->on("/firmware-update", HTTP_GET, []() {
+    if (!wm.handleRequest()) {
+      return;
+    }
     FirmwareReleaseInfo info;
     String errorMessage;
     bool ok = fetchLatestFirmwareRelease(info, errorMessage);
@@ -606,6 +614,9 @@ void setupPortalRoutes() {
   });
 
   wm.server->on("/firmware-update/install", HTTP_GET, []() {
+    if (!wm.handleRequest()) {
+      return;
+    }
     FirmwareReleaseInfo info;
     String errorMessage;
     if (!fetchLatestFirmwareRelease(info, errorMessage)) {
@@ -719,6 +730,7 @@ void configureWiFi() {
   wm.setConfigPortalBlocking(false);
   wm.setTitle("FRITZ!Box Status");
   wm.setCustomHeadElement(kPortalLogoHeadElement);
+  wm.setShowBack(true);
   // Keep Info page clean: only informational content, no destructive quick actions.
   wm.setShowInfoErase(false);
   wm.setShowInfoUpdate(false);
@@ -742,6 +754,11 @@ void configureWiFi() {
   wm.setParamsPage(false);
   wm.setMenu(bootSequenceEnabled ? fullMenu : firstRunMenu, bootSequenceEnabled ? 6 : 1);
   applyPortalCustomHtml(!bootSequenceEnabled);
+  if (bootSequenceEnabled && strlen(cfg.web_menu_password) >= 8) {
+    wm.setHttpAuth("admin", cfg.web_menu_password);
+  } else {
+    wm.setHttpAuth("", "");
+  }
   drawBootScreen();
   bootHasHostConfig = bootSequenceEnabled;
 

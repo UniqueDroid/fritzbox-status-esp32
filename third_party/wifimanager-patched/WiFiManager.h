@@ -678,6 +678,9 @@ protected:
     // webserver handlers
 public:
     void          handleNotFound();
+    // Exposed so app code can gate custom routes (added directly on wm.server)
+    // behind the same session/menu-password check used by the built-in pages.
+    bool          handleRequest();
 protected:
     void          HTTPSend(const String &content);
     void          handleRoot();
@@ -692,7 +695,6 @@ protected:
     void          handleErase(boolean opt);
     void          handleParam();
     void          handleWiFiStatus();
-    bool          handleRequest();
     void          handleParamSave();
     void          doParamSave();
 
