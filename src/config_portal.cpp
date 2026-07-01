@@ -636,7 +636,7 @@ void setupPortalRoutes() {
       String script = "<script>setFwProgress(";
       script += percent;
       script += ",\"";
-      script += escapeJson(percent >= 100 ? String("Finishing firmware update...") : String("Downloading and flashing firmware... ") + percent + "%");
+      script += escapeJson(percent >= 100 ? String("Verifying checksum (SHA256)...") : String("Downloading and flashing firmware... ") + percent + "%");
       script += "\",false);</script>";
       wm.server->sendContent(script);
     });
@@ -650,7 +650,7 @@ void setupPortalRoutes() {
       return;
     }
 
-    wm.server->sendContent("<script>setFwProgress(100,\"Firmware updated successfully. Device is rebooting now...\",false);</script>");
+    wm.server->sendContent("<script>setFwProgress(100,\"<span style='color:#2e7d32;font-weight:700'>&#10003;</span> Checksum verified. Firmware updated successfully. Device is rebooting now...\",false);</script>");
     wm.server->sendContent("</div></body></html>");
     delay(1600);
     ESP.restart();

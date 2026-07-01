@@ -12,6 +12,7 @@ struct FirmwareReleaseInfo {
   String releaseUrl;
   String assetUrl;
   String assetName;
+  String assetDigest;  // "sha256:<hex>" from GitHub's release asset digest, empty if unavailable
   String publishedAt;
   size_t assetSize = 0;
   bool updateAvailable = false;

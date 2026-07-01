@@ -20,7 +20,9 @@ constexpr uint32_t kWifiRetryMsLocal = 10000;
 static SemaphoreHandle_t xApiMutex = nullptr;
 static volatile bool apiDataReady = false;
 
-static lv_color_t drawBuf[DASHBOARD_WIDTH * kBufferLines];
+// Heap-allocated (not static) so the linker doesn't have to fit it in the
+// fixed DRAM segment - matters on boards with less internal RAM (e.g. CYD).
+static lv_color_t *drawBuf = nullptr;
 static lv_disp_draw_buf_t dispDrawBuf;
 static lv_disp_drv_t dispDrv;
 
@@ -39,7 +41,7 @@ static const uint8_t brightnessLevels[] = {40, 96, 160, 255};
 static lv_obj_t *pill = nullptr;
 static lv_obj_t *updateIcon = nullptr;
 static lv_obj_t *wifiSignalCanvas = nullptr;
-static lv_color_t wifiSignalCanvasBuf[15 * 14];
+static lv_color_t *wifiSignalCanvasBuf = nullptr;
 static lv_obj_t *pages[3] = {nullptr, nullptr, nullptr};
 static LvglScreenRefs refs;
 
@@ -321,16 +323,16 @@ void refreshLiveDataUi() {
     lv_obj_set_style_pad_top(pill, 0, 0);
     lv_obj_set_style_pad_bottom(pill, 0, 0);
   }
-  lv_obj_set_style_bg_color(pill, isOnline ? lv_color_hex(0x174E2E) : lv_color_hex(0x1E1E5A), 0);
-  lv_obj_set_style_text_color(pill, isOnline ? lv_color_hex(0x83F7AF) : lv_color_hex(0xB3B3FF), 0);
+  lv_obj_set_style_bg_color(pill, isOnline ? lv_color_hex(0x174E2E) : lv_color_hex(0x5A1E1E), 0);
+  lv_obj_set_style_text_color(pill, isOnline ? lv_color_hex(0x83F7AF) : lv_color_hex(0xFF8B8B), 0);
 
   if (mainStatusVal) {
     lv_label_set_text(mainStatusVal, isOnline ? "Online" : "Offline");
-    lv_obj_set_style_text_color(mainStatusVal, isOnline ? lv_color_hex(0x83F7AF) : lv_color_hex(0xB3B3FF), 0);
+    lv_obj_set_style_text_color(mainStatusVal, isOnline ? lv_color_hex(0x83F7AF) : lv_color_hex(0xFF8B8B), 0);
   }
   if (mainStatusCard) {
-    lv_obj_set_style_bg_color(mainStatusCard, isOnline ? lv_color_hex(0x174E2E) : lv_color_hex(0x1E1E5A), 0);
-    lv_obj_set_style_border_color(mainStatusCard, isOnline ? lv_color_hex(0x2A9D63) : lv_color_hex(0x5B5BC8), 0);
+    lv_obj_set_style_bg_color(mainStatusCard, isOnline ? lv_color_hex(0x174E2E) : lv_color_hex(0x5A1E1E), 0);
+    lv_obj_set_style_border_color(mainStatusCard, isOnline ? lv_color_hex(0x2A9D63) : lv_color_hex(0xC85B5B), 0);
   }
 
   lv_bar_set_value(cpuBar, cpuPercent, LV_ANIM_OFF);
@@ -513,6 +515,8 @@ void createUi() {
 void initDashboard() {
   lv_init();
 
+  drawBuf = static_cast<lv_color_t *>(malloc(DASHBOARD_WIDTH * kBufferLines * sizeof(lv_color_t)));
+  wifiSignalCanvasBuf = static_cast<lv_color_t *>(malloc(15 * 14 * sizeof(lv_color_t)));
   lv_disp_draw_buf_init(&dispDrawBuf, drawBuf, nullptr, DASHBOARD_WIDTH * kBufferLines);
 
   lv_disp_drv_init(&dispDrv);

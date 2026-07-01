@@ -4,10 +4,13 @@
 namespace {
 constexpr int kMainGraphW = 114;
 constexpr int kMainGraphH = 76;
-static lv_color_t sMainGraphBuf[kMainGraphW * kMainGraphH];
+// Heap-allocated (not static) so the linker doesn't have to fit it in the
+// fixed DRAM segment - matters on boards with less internal RAM (e.g. CYD).
+static lv_color_t *sMainGraphBuf = nullptr;
 }
 
 void createScreenDashboard(lv_obj_t *page, LvglScreenRefs &refs, int trafficPoints) {
+  sMainGraphBuf = static_cast<lv_color_t *>(malloc(kMainGraphW * kMainGraphH * sizeof(lv_color_t)));
   lv_obj_t *cpuLabel = lv_label_create(page);
   lv_label_set_text(cpuLabel, "CPU");
   lv_obj_set_style_text_color(cpuLabel, lv_color_hex(0xA8B3C0), 0);

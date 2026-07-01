@@ -32,15 +32,19 @@ void createScreenMetrics(lv_obj_t *page, LvglScreenRefs &refs) {
   refs.bigTempVal = lvglCreateValueLabel(page, "-", 286, 62, lv_color_hex(0xDDE7F2));
   lv_obj_set_style_text_font(refs.bigTempVal, &lv_font_montserrat_14, 0);
 
+  // X offsets leave room for the widest realistic value in each slot
+  // ("999.9 ms" / "100.0%" at montserrat_14, measured at 64px / 47px) so the
+  // value never runs into the next label, which happened with the old
+  // tighter spacing once RTT/RTTsd carried real "ms" values instead of "-".
   lvglCreateValueLabel(page, "RTT", 10, 108, lv_color_hex(0x8E9BAC));
   refs.bigRttVal = lvglCreateValueLabel(page, "-", 40, 108, lv_color_hex(0xF5B942));
   lv_obj_set_style_text_font(refs.bigRttVal, &lv_font_montserrat_14, 0);
 
-  lvglCreateValueLabel(page, "RTTsd", 86, 108, lv_color_hex(0x8E9BAC));
-  refs.bigRttSdVal = lvglCreateValueLabel(page, "-", 138, 108, lv_color_hex(0xF5B942));
+  lvglCreateValueLabel(page, "RTTsd", 110, 108, lv_color_hex(0x8E9BAC));
+  refs.bigRttSdVal = lvglCreateValueLabel(page, "-", 156, 108, lv_color_hex(0xF5B942));
   lv_obj_set_style_text_font(refs.bigRttSdVal, &lv_font_montserrat_14, 0);
 
-  lvglCreateValueLabel(page, "Loss", 190, 108, lv_color_hex(0x8E9BAC));
-  refs.bigLossVal = lvglCreateValueLabel(page, "-", 228, 108, lv_color_hex(0xF5B942));
+  lvglCreateValueLabel(page, "Loss", 224, 108, lv_color_hex(0x8E9BAC));
+  refs.bigLossVal = lvglCreateValueLabel(page, "-", 260, 108, lv_color_hex(0xF5B942));
   lv_obj_set_style_text_font(refs.bigLossVal, &lv_font_montserrat_14, 0);
 }

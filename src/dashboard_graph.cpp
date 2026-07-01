@@ -5,10 +5,13 @@
 namespace {
 constexpr int kGraphW = DASHBOARD_WIDTH - 20;
 constexpr int kGraphH = 90;
-static lv_color_t sGraphBuf[kGraphW * kGraphH];
+// Heap-allocated (not static) so the linker doesn't have to fit it in the
+// fixed DRAM segment - matters on boards with less internal RAM (e.g. CYD).
+static lv_color_t *sGraphBuf = nullptr;
 }
 
 void createScreenGraph(lv_obj_t *page, LvglScreenRefs &refs, int trafficPoints) {
+  sGraphBuf = static_cast<lv_color_t *>(malloc(kGraphW * kGraphH * sizeof(lv_color_t)));
   refs.trafficChart = lv_canvas_create(page);
   lv_obj_set_size(refs.trafficChart, DASHBOARD_WIDTH - 20, 90);
   lv_obj_align(refs.trafficChart, LV_ALIGN_TOP_LEFT, 10, 14);

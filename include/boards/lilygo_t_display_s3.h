@@ -14,7 +14,7 @@
 #define TFT_WIDTH 170
 #define TFT_HEIGHT 320
 #define CGRAM_OFFSET 1
-#define TFT_RGB_ORDER 0
+#define TFT_RGB_ORDER TFT_BGR
 #define TFT_INVERSION_ON 1
 
 #define TFT_CS 6

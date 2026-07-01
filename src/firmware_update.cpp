@@ -5,6 +5,7 @@
 #include <HTTPClient.h>
 #include <Update.h>
 #include <WiFiClientSecure.h>
+#include <mbedtls/sha256.h>
 
 #include "firmware_version.h"
 
@@ -15,6 +16,35 @@ String normalizeVersion(String value) {
   if (value.startsWith("v")) {
     value.remove(0, 1);
   }
+  return value;
+}
+
+String bytesToHex(const uint8_t *data, size_t len) {
+  static const char *kHexChars = "0123456789abcdef";
+  String out;
+  out.reserve(len * 2);
+  for (size_t i = 0; i < len; ++i) {
+    out += kHexChars[(data[i] >> 4) & 0xF];
+    out += kHexChars[data[i] & 0xF];
+  }
+  return out;
+}
+
+// GitHub's asset "digest" field looks like "sha256:<hex>". Returns the bare
+// hex string, or empty if the digest is missing or not a sha256 digest.
+String expectedSha256Hex(const String &digest) {
+  String value = digest;
+  value.trim();
+  int sep = value.indexOf(':');
+  if (sep >= 0) {
+    String algo = value.substring(0, sep);
+    algo.toLowerCase();
+    if (algo != "sha256") {
+      return String();
+    }
+    value = value.substring(sep + 1);
+  }
+  value.toLowerCase();
   return value;
 }
 
@@ -56,15 +86,17 @@ bool downloadJsonDocument(JsonDocument &doc, const String &url, String &errorMes
   return true;
 }
 
-String pickAssetUrl(const JsonArray &assets, String &assetName, size_t &assetSize) {
+String pickAssetUrl(const JsonArray &assets, String &assetName, size_t &assetSize, String &assetDigest) {
   String fallbackUrl;
   String fallbackName;
   size_t fallbackSize = 0;
+  String fallbackDigest;
 
   for (JsonObjectConst asset : assets) {
     String name = asset["name"] | "";
     String url = asset["browser_download_url"] | "";
     size_t size = asset["size"] | 0;
+    String digest = asset["digest"] | "";
     if (url.length() == 0) {
       continue;
     }
@@ -73,6 +105,7 @@ String pickAssetUrl(const JsonArray &assets, String &assetName, size_t &assetSiz
       fallbackUrl = url;
       fallbackName = name;
       fallbackSize = size;
+      fallbackDigest = digest;
     }
 
     String lowerName = name;
@@ -80,12 +113,14 @@ String pickAssetUrl(const JsonArray &assets, String &assetName, size_t &assetSiz
     if (lowerName.endsWith(".bin")) {
       assetName = name;
       assetSize = size;
+      assetDigest = digest;
       return url;
     }
   }
 
   assetName = fallbackName;
   assetSize = fallbackSize;
+  assetDigest = fallbackDigest;
   return fallbackUrl;
 }
 }  // namespace
@@ -108,7 +143,7 @@ bool fetchLatestFirmwareRelease(FirmwareReleaseInfo &info, String &errorMessage)
   info.publishedAt = doc["published_at"] | "";
 
   JsonArray assets = doc["assets"].as<JsonArray>();
-  info.assetUrl = pickAssetUrl(assets, info.assetName, info.assetSize);
+  info.assetUrl = pickAssetUrl(assets, info.assetName, info.assetSize, info.assetDigest);
   info.updateAvailable = normalizeVersion(info.currentVersion) != normalizeVersion(info.latestVersion);
 
   if (info.assetUrl.length() == 0) {
@@ -153,6 +188,14 @@ bool flashFirmwareAsset(const FirmwareReleaseInfo &info, String &errorMessage, c
     return false;
   }
 
+  String expectedHash = expectedSha256Hex(info.assetDigest);
+  bool verifyHash = expectedHash.length() == 64;
+  mbedtls_sha256_context shaCtx;
+  if (verifyHash) {
+    mbedtls_sha256_init(&shaCtx);
+    mbedtls_sha256_starts_ret(&shaCtx, 0);
+  }
+
   WiFiClient *stream = http.getStreamPtr();
   uint8_t buffer[2048];
   size_t written = 0;
@@ -168,6 +211,9 @@ bool flashFirmwareAsset(const FirmwareReleaseInfo &info, String &errorMessage, c
     if (available == 0) {
       if ((millis() - lastDataMs) > 15000) {
         errorMessage = "Firmware download timed out";
+        if (verifyHash) {
+          mbedtls_sha256_free(&shaCtx);
+        }
         Update.abort();
         http.end();
         return false;
@@ -191,9 +237,16 @@ bool flashFirmwareAsset(const FirmwareReleaseInfo &info, String &errorMessage, c
     size_t chunkWritten = Update.write(buffer, bytesRead);
     if (chunkWritten != static_cast<size_t>(bytesRead)) {
       errorMessage = "OTA write failed: " + String(Update.errorString());
+      if (verifyHash) {
+        mbedtls_sha256_free(&shaCtx);
+      }
       Update.abort();
       http.end();
       return false;
+    }
+
+    if (verifyHash) {
+      mbedtls_sha256_update_ret(&shaCtx, buffer, bytesRead);
     }
 
     written += chunkWritten;
@@ -203,6 +256,21 @@ bool flashFirmwareAsset(const FirmwareReleaseInfo &info, String &errorMessage, c
 
     if (progressCallback) {
       progressCallback(written, totalBytes);
+    }
+  }
+
+  if (verifyHash) {
+    uint8_t digestBytes[32];
+    mbedtls_sha256_finish_ret(&shaCtx, digestBytes);
+    mbedtls_sha256_free(&shaCtx);
+    String computedHash = bytesToHex(digestBytes, sizeof(digestBytes));
+    if (computedHash != expectedHash) {
+      // Abort instead of end(true): the new partition is discarded and the
+      // device keeps booting the currently running firmware.
+      Update.abort();
+      http.end();
+      errorMessage = "Firmware checksum mismatch (SHA256) - update aborted";
+      return false;
     }
   }
 
