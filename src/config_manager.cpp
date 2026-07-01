@@ -51,7 +51,7 @@ bool ConfigManager::loadConfig() {
   has_required_data_ = (fritzbox_host.length() > 0);
   
   if (fritzbox_host.length() == 0) {
-    strlcpy(config_.fritzbox_host, "192.168.1.1", sizeof(config_.fritzbox_host));
+    strlcpy(config_.fritzbox_host, "192.168.178.1", sizeof(config_.fritzbox_host));
   } else {
     strlcpy(config_.fritzbox_host, fritzbox_host.c_str(), sizeof(config_.fritzbox_host));
   }
@@ -130,7 +130,7 @@ void ConfigManager::setWebMenuPassword(const char* password) {
 
 void ConfigManager::clearConfig() {
   memset(&config_, 0, sizeof(config_));
-  strcpy(config_.fritzbox_host, "192.168.1.1");
+  strcpy(config_.fritzbox_host, "192.168.178.1");
   strcpy(config_.web_menu_password, "fwmenu123");
   has_required_data_ = false;
   
