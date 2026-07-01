@@ -160,7 +160,7 @@ String sanitizeMenuPassword(const char *raw) {
 
 String buildCustomStatusHtml(bool firstRun) {
   if (firstRun) {
-    String html = "<div class='msg'><strong>Firewall Host:</strong> not configured</div>";
+    String html = "<div class='msg'><strong>Fritzbox Host:</strong> not configured</div>";
     html += "<div class='msg'><strong>Firmware:</strong> ";
     html += String(kFirmwareVersion);
     html += "</div>";
@@ -170,7 +170,7 @@ String buildCustomStatusHtml(bool firstRun) {
   String fwColor = bootApiReachableState ? "#5cb85c" : "#FF8B8B";
   String html = "<div class='msg' style='border-left-color:";
   html += fwColor;
-  html += "'><strong>Firewall Host:</strong> ";
+  html += "'><strong>Fritzbox Host:</strong> ";
   html += String(fritzBoxHost);
   html += "</div>";
   html += "<div class='msg'><strong>Firmware:</strong> ";
