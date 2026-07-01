@@ -53,11 +53,11 @@ jobs:
       - name: Rename firmware artifact
         shell: bash
         run: |
-          cp .pio/build/lilygo-t-display-s3/firmware.bin pfsense-status-esp32-lilygo-t-display-s3-${GITHUB_REF_NAME}.bin
+          cp .pio/build/lilygo-t-display-s3/firmware.bin fritzbox-status-esp32-lilygo-t-display-s3-${GITHUB_REF_NAME}.bin
 
       - name: Create or update release
         uses: softprops/action-gh-release@v2
         with:
-          files: pfsense-status-esp32-lilygo-t-display-s3-${{ github.ref_name }}.bin
+          files: fritzbox-status-esp32-lilygo-t-display-s3-${{ github.ref_name }}.bin
           generate_release_notes: true
           fail_on_unmatched_files: true
