@@ -7,6 +7,7 @@
 #include <TFT_eSPI.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
+#include <esp_system.h>
 
 // Imports
 #include "alerts.h"
@@ -19,9 +20,22 @@
 // Global constants
 const char *kPrefsNs = "fwstatus";
 const char *kApName = "FritzBox-Status-AP";
-const char *kApPassword = "FWStatus2026";
+char kApPassword[16] = "";
 const uint32_t kPollMs = 4500;
 const uint32_t kWifiRetryMs = 10000;
+
+// Generates a random 8-char AP password (letters/digits/symbols, no
+// visually-ambiguous characters) so the setup portal isn't protected by a
+// password anyone can read in the public source. Regenerated every boot -
+// only needs to be readable off this device's own screen while in AP mode.
+void generateApPassword() {
+  static const char kCharset[] = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*";
+  constexpr size_t kCharsetLen = sizeof(kCharset) - 1;
+  for (int i = 0; i < 8; ++i) {
+    kApPassword[i] = kCharset[esp_random() % kCharsetLen];
+  }
+  kApPassword[8] = '\0';
+}
 
 #ifndef DASHBOARD_WIDTH
 #define DASHBOARD_WIDTH 320
@@ -138,6 +152,7 @@ void enableBacklight() {
 
 void setup() {
   delay(200);
+  generateApPassword();
 
   // Load persisted configuration first so globals and portal state are in sync.
   ConfigManager& cfg = ConfigManager::getInstance();

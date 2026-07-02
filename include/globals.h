@@ -57,7 +57,9 @@ extern String lastUpdate;
 extern uint32_t lastPoll;
 extern const uint32_t kPollMs;
 extern const char *kApName;
-extern const char *kApPassword;
+// Randomly generated each boot (see generateApPassword() in main.cpp) so the
+// setup AP isn't protected by a fixed password baked into public source.
+extern char kApPassword[16];
 
 // Firmware update notification state
 extern bool firmwareUpdateAvailable;

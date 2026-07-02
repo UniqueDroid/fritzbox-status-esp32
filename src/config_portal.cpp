@@ -539,6 +539,12 @@ void drawBootScreen() {
     lv_obj_set_style_text_color(portalState, lv_color_hex(0x8E9BAC), 0);
     lv_obj_align(portalState, LV_ALIGN_TOP_LEFT, 14, 60);
 
+    lv_obj_t *pass = lv_label_create(bootOverlay);
+    lv_label_set_text_fmt(pass, "AP Password: %s", kApPassword);
+    lv_obj_set_style_text_font(pass, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(pass, lv_color_hex(0xF5B942), 0);
+    lv_obj_align(pass, LV_ALIGN_TOP_LEFT, 14, 84);
+
     lv_obj_t *hint = lv_label_create(bootOverlay);
     lv_label_set_text(hint, "Open portal for setup:");
     lv_obj_set_style_text_font(hint, &lv_font_montserrat_14, 0);
