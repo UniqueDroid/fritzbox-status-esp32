@@ -26,6 +26,7 @@ The following are pixel-accurate mockups rendered from the real UI code with a n
 - Three-screen live dashboard (NerdMiner-inspired layout), cycled with a physical button; second button cycles display brightness
 - Self-updating: checks this repo's GitHub releases periodically and shows an update badge; installing a release verifies the downloaded firmware's SHA256 checksum (from GitHub's release asset digest) before committing the OTA write, so a corrupted or tampered download is discarded instead of booted
 - Factory reset (erase Wi-Fi + FRITZ!Box config) from the web menu
+- Optional Telegram bot integration: WAN down/up and threshold alerts, a periodic status digest with configurable interval and quiet hours, a daily min/max summary, proactive firmware-update and boot notifications, and on-demand chat commands (see [Telegram bot](#telegram-bot-optional))
 
 ## Requirements
 
@@ -53,6 +54,36 @@ The device periodically checks `https://api.github.com/repos/UniqueDroid/fritzbo
 1. Downloads the release's `.bin` asset over HTTPS and streams it directly into the inactive OTA partition.
 2. Computes a SHA256 hash of the downloaded bytes while streaming, and compares it against the checksum GitHub reports for that asset (the release API's `digest` field).
 3. Only marks the new partition bootable if the hashes match; on a mismatch, the write is discarded and the device keeps running its current firmware.
+
+## Telegram bot (optional)
+
+The device can push alerts and answer status queries through a Telegram bot, talking directly to the Telegram Bot API over HTTPS - no third-party server involved. The whole feature is opt-in: leave the bot token or chat ID empty and it stays fully inactive with zero effect on the rest of the firmware.
+
+### What it does
+
+- **Alerts** (sent once per state change, not spammed): WAN down/up, packet loss above a threshold, temperature above a threshold.
+- **Status digest**: a WAN/CPU/RAM/temperature summary sent on a configurable interval, with an optional quiet-hours window (mutes only the digest; alerts still come through).
+- **Daily summary**: once a day, a min/max recap of CPU, temperature, packet loss and WAN-down events.
+- **Proactive notifications**: a new firmware release becomes available, or the device just booted.
+- **Chat commands** - message the bot directly:
+  - `/status` - current WAN/CPU/RAM/temp summary
+  - `/wan` - WAN details (RTT, jitter, loss)
+  - `/uptime` - device uptime
+  - `/snapshot` - a photo of the current display
+  - `/setloss <percent>` / `/settemp <percent>` - change alert thresholds from the chat
+  - `/update` / `/update confirm` - check for and install a firmware update from the chat
+  - `/help` - list all commands
+
+Only messages from the configured chat ID are ever acted on; everyone else is silently ignored.
+
+### Setting it up
+
+1. Create a bot with [@BotFather](https://t.me/BotFather) on Telegram and copy the bot token it gives you. See Telegram's own [BotFather guide](https://core.telegram.org/bots/features#botfather) and [bot tutorial](https://core.telegram.org/bots/tutorial) if you're new to this.
+2. Send your new bot any message (e.g. `/start`) so Telegram creates a chat with it, then find your numeric chat ID - the easiest way is messaging [@userinfobot](https://t.me/userinfobot), or reading it off the [`getUpdates`](https://core.telegram.org/bots/api#getupdates) API response for your bot.
+3. On the device, open the web menu and go to **Telegram Settings**. Enter the bot token and chat ID, adjust the alert thresholds, digest interval and quiet hours as you like, and save.
+4. Send `/help` to your bot to confirm it responds.
+
+Reference: the full [Telegram Bot API documentation](https://core.telegram.org/bots/api).
 
 ## Board profiles (Bruce-style)
 
