@@ -36,6 +36,11 @@ void sendBootNotification();
 // Notifies once (edge-triggered) when a firmware update becomes available.
 void checkAndNotifyFirmwareUpdate(bool updateAvailable, const String &latestVersion);
 
+// Loads the running daily min/max stats from NVS. Call once at boot before
+// the first updateDailyStats()/checkAndSendDailySummary() call, so a reboot
+// mid-day doesn't reset the day's stats to "no data yet".
+void loadDailyStats();
+
 // Feeds the running min/max stats used by the daily summary. Call once per
 // poll cycle.
 void updateDailyStats();
@@ -43,6 +48,10 @@ void updateDailyStats();
 // Sends a once-a-day (08:00 local) min/max summary and resets the running
 // stats. No-op outside the trigger window or if Telegram isn't configured.
 void checkAndSendDailySummary();
+
+// Clears the persisted daily-summary stats from NVS and resets the running
+// in-memory values. Called on factory reset.
+void clearDailyStats();
 
 // Marks a snapshot as requested from the (non-LVGL-thread) command poller.
 // Safe to call from any task.

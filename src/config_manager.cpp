@@ -1,6 +1,7 @@
 // Persistent configuration manager backed by ESP32 Preferences (NVS).
 #include "config_manager.h"
 #include "globals.h"
+#include "alerts.h"
 #include "utils.h"
 #include <Preferences.h>
 
@@ -262,4 +263,5 @@ void ConfigManager::clearConfig() {
   telegramDndEndHour = kDefaultDndEndHour;
 
   clearTrafficHistory();
+  clearDailyStats();
 }

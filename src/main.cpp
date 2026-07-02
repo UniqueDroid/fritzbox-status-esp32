@@ -9,6 +9,7 @@
 #include <WiFiManager.h>
 
 // Imports
+#include "alerts.h"
 #include "config_manager.h"
 #include "config_portal.h"
 #include "fritzbox_api.h"
@@ -157,6 +158,8 @@ void setup() {
   // Restore the traffic graph's last known state so it doesn't start empty
   // after every reboot/OTA update.
   loadTrafficHistory();
+  // Same for the Telegram daily summary's running min/max stats.
+  loadDailyStats();
 
   enableBacklight();
 

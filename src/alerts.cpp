@@ -5,6 +5,7 @@
 #include "firmware_version.h"
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <Preferences.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <lvgl.h>
@@ -23,6 +24,39 @@ float sDailyMinLoss = 1.0e9f, sDailyMaxLoss = -1.0f;
 int sDailyWanDownCount = 0;
 int sLastSummaryYday = -1;
 constexpr int kDailySummaryHour = 8;
+
+constexpr const char *kDailyStatsNs = "dailystats";
+uint32_t sLastDailyStatsSaveMs = 0;
+constexpr uint32_t kDailyStatsSaveMs = 60000;
+
+// Writes the running daily min/max stats to NVS immediately (no throttle) -
+// used right after a reset so a reboot moments later can't reload stale
+// pre-reset values. Routine periodic saves go through the throttled
+// wrapper below instead, to limit flash wear.
+void writeDailyStatsToNvs() {
+  Preferences p;
+  if (!p.begin(kDailyStatsNs, false)) {
+    return;
+  }
+  p.putInt("min_cpu", sDailyMinCpu);
+  p.putInt("max_cpu", sDailyMaxCpu);
+  p.putInt("min_temp", sDailyMinTemp);
+  p.putInt("max_temp", sDailyMaxTemp);
+  p.putFloat("min_loss", sDailyMinLoss);
+  p.putFloat("max_loss", sDailyMaxLoss);
+  p.putInt("down_count", sDailyWanDownCount);
+  p.putInt("last_yday", sLastSummaryYday);
+  p.end();
+}
+
+void saveDailyStatsThrottled() {
+  uint32_t now = millis();
+  if (sLastDailyStatsSaveMs != 0 && now - sLastDailyStatsSaveMs < kDailyStatsSaveMs) {
+    return;
+  }
+  sLastDailyStatsSaveMs = now;
+  writeDailyStatsToNvs();
+}
 
 float parsePercent(const String &raw) {
   String s = raw;
@@ -424,6 +458,8 @@ void updateDailyStats() {
     if (lossPct < sDailyMinLoss) sDailyMinLoss = lossPct;
     if (lossPct > sDailyMaxLoss) sDailyMaxLoss = lossPct;
   }
+
+  saveDailyStatsThrottled();
 }
 
 void checkAndSendDailySummary() {
@@ -466,6 +502,41 @@ void checkAndSendDailySummary() {
   sDailyMinLoss = 1.0e9f;
   sDailyMaxLoss = -1.0f;
   sDailyWanDownCount = 0;
+  writeDailyStatsToNvs();
+}
+
+void loadDailyStats() {
+  Preferences p;
+  if (!p.begin(kDailyStatsNs, true)) {
+    return;
+  }
+  if (p.isKey("min_cpu")) sDailyMinCpu = p.getInt("min_cpu", sDailyMinCpu);
+  if (p.isKey("max_cpu")) sDailyMaxCpu = p.getInt("max_cpu", sDailyMaxCpu);
+  if (p.isKey("min_temp")) sDailyMinTemp = p.getInt("min_temp", sDailyMinTemp);
+  if (p.isKey("max_temp")) sDailyMaxTemp = p.getInt("max_temp", sDailyMaxTemp);
+  if (p.isKey("min_loss")) sDailyMinLoss = p.getFloat("min_loss", sDailyMinLoss);
+  if (p.isKey("max_loss")) sDailyMaxLoss = p.getFloat("max_loss", sDailyMaxLoss);
+  if (p.isKey("down_count")) sDailyWanDownCount = p.getInt("down_count", sDailyWanDownCount);
+  if (p.isKey("last_yday")) sLastSummaryYday = p.getInt("last_yday", sLastSummaryYday);
+  p.end();
+}
+
+void clearDailyStats() {
+  sDailyMinCpu = 101;
+  sDailyMaxCpu = -1;
+  sDailyMinTemp = 101;
+  sDailyMaxTemp = -1;
+  sDailyMinLoss = 1.0e9f;
+  sDailyMaxLoss = -1.0f;
+  sDailyWanDownCount = 0;
+  sLastSummaryYday = -1;
+
+  Preferences p;
+  if (!p.begin(kDailyStatsNs, false)) {
+    return;
+  }
+  p.clear();
+  p.end();
 }
 
 namespace {
