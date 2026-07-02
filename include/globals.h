@@ -20,6 +20,16 @@ extern WiFiManagerParameter *menuPasswordParam;
 extern char fritzBoxHost[64];
 extern bool shouldSaveConfig;
 
+// Telegram alerting
+extern char telegramBotToken[64];
+extern char telegramChatId[32];
+extern int alertLossThresholdPct;
+extern int alertTempThresholdPct;
+extern int telegramDigestIntervalMin;
+extern bool telegramDndEnabled;
+extern int telegramDndStartHour;
+extern int telegramDndEndHour;
+
 // WAN Status
 extern String wanName;
 extern String wanStatus;

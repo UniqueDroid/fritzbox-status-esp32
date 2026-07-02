@@ -15,4 +15,8 @@
 
 #define LV_USE_LOG 0
 
+// Needed to render the current screen into an off-screen buffer for the
+// Telegram /snapshot command.
+#define LV_USE_SNAPSHOT 1
+
 #endif

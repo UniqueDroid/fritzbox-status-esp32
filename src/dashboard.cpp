@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <driver/gpio.h>
 
+#include "alerts.h"
 #include "config_portal.h"
 #include "globals.h"
 #include "lvgl_screens.h"
@@ -554,11 +555,17 @@ void initDashboard() {
           fetchGatewayStatus();
           fetchWanTraffic();
           fetchSystemStatus();
+          checkAndSendAlerts();
+          checkAndSendStatusDigest();
+          checkTelegramCommands();
+          updateDailyStats();
+          checkAndSendDailySummary();
           if ((millis() - lastReleaseCheckMs) >= 15UL * 60UL * 1000UL) {
             FirmwareReleaseInfo releaseInfo;
             String errorMessage;
             if (fetchLatestFirmwareRelease(releaseInfo, errorMessage)) {
               firmwareUpdateAvailable = releaseInfo.updateAvailable;
+              checkAndNotifyFirmwareUpdate(releaseInfo.updateAvailable, releaseInfo.latestVersion);
             }
             lastReleaseCheckMs = millis();
           }
@@ -578,6 +585,7 @@ void loopDashboard() {
 
   markBootDashboardReady();
   dismissBootScreenIfConnected();
+  processPendingSnapshotRequest();
 
   wm.process();
   if (wm.server) {

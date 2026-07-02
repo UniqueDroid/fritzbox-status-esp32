@@ -13,6 +13,7 @@
 #include "config_portal.h"
 #include "fritzbox_api.h"
 #include "dashboard.h"
+#include "utils.h"
 
 // Global constants
 const char *kPrefsNs = "fwstatus";
@@ -44,6 +45,16 @@ bool shouldSaveConfig = false;
 WiFiManager wm;
 WiFiManagerParameter *fritzboxIpParam = nullptr;
 WiFiManagerParameter *menuPasswordParam = nullptr;
+
+// Telegram alerting
+char telegramBotToken[64] = "";
+char telegramChatId[32] = "";
+int alertLossThresholdPct = 5;
+int alertTempThresholdPct = 85;
+int telegramDigestIntervalMin = 60;
+bool telegramDndEnabled = false;
+int telegramDndStartHour = 23;
+int telegramDndEndHour = 7;
 
 // WAN Status
 String wanName = "WAN";
@@ -134,6 +145,18 @@ void setup() {
   // Update global variables
   const DeviceConfig& config = cfg.getConfig();
   strlcpy(fritzBoxHost, config.fritzbox_host, sizeof(fritzBoxHost));
+  strlcpy(telegramBotToken, config.telegram_bot_token, sizeof(telegramBotToken));
+  strlcpy(telegramChatId, config.telegram_chat_id, sizeof(telegramChatId));
+  alertLossThresholdPct = config.alert_loss_threshold_pct;
+  alertTempThresholdPct = config.alert_temp_threshold_pct;
+  telegramDigestIntervalMin = config.telegram_digest_interval_min;
+  telegramDndEnabled = config.telegram_dnd_enabled;
+  telegramDndStartHour = config.telegram_dnd_start_hour;
+  telegramDndEndHour = config.telegram_dnd_end_hour;
+
+  // Restore the traffic graph's last known state so it doesn't start empty
+  // after every reboot/OTA update.
+  loadTrafficHistory();
 
   enableBacklight();
 

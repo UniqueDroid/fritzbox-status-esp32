@@ -1,6 +1,34 @@
 // Shared parsing and normalization helpers for API payloads and traffic data.
 #include "utils.h"
 #include "globals.h"
+#include <Preferences.h>
+
+namespace {
+constexpr const char *kTrafficHistNs = "traffichist";
+constexpr const char *kTrafficHistRxKey = "rx";
+constexpr const char *kTrafficHistTxKey = "tx";
+// Throttles NVS writes so continuous polling doesn't wear the flash sector;
+// worst case on reboot we lose up to this much of the tail end of history.
+constexpr uint32_t kTrafficHistSaveMs = 60000;
+uint32_t sLastTrafficSaveMs = 0;
+
+void saveTrafficHistory() {
+  uint32_t now = millis();
+  if (sLastTrafficSaveMs != 0 && now - sLastTrafficSaveMs < kTrafficHistSaveMs) {
+    return;
+  }
+  sLastTrafficSaveMs = now;
+
+  Preferences p;
+  if (!p.begin(kTrafficHistNs, false)) {
+    return;
+  }
+  size_t bytes = sizeof(float) * (size_t)kTrafficPoints;
+  p.putBytes(kTrafficHistRxKey, wanRxHistory, bytes);
+  p.putBytes(kTrafficHistTxKey, wanTxHistory, bytes);
+  p.end();
+}
+}  // namespace
 
 String pickString(JsonVariantConst v, const String &fallback) {
   if (v.isNull()) {
@@ -196,6 +224,31 @@ void pushTrafficSample(float rxKbps, float txKbps) {
   }
   wanRxHistory[kTrafficPoints - 1] = max(0.0f, rxKbps);
   wanTxHistory[kTrafficPoints - 1] = max(0.0f, txKbps);
+  saveTrafficHistory();
+}
+
+void loadTrafficHistory() {
+  Preferences p;
+  if (!p.begin(kTrafficHistNs, true)) {
+    return;
+  }
+  size_t bytes = sizeof(float) * (size_t)kTrafficPoints;
+  if (p.isKey(kTrafficHistRxKey) && p.getBytesLength(kTrafficHistRxKey) == bytes) {
+    p.getBytes(kTrafficHistRxKey, wanRxHistory, bytes);
+  }
+  if (p.isKey(kTrafficHistTxKey) && p.getBytesLength(kTrafficHistTxKey) == bytes) {
+    p.getBytes(kTrafficHistTxKey, wanTxHistory, bytes);
+  }
+  p.end();
+}
+
+void clearTrafficHistory() {
+  Preferences p;
+  if (!p.begin(kTrafficHistNs, false)) {
+    return;
+  }
+  p.clear();
+  p.end();
 }
 
 bool looksLikeRttValue(const String &value) {

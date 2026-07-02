@@ -10,6 +10,14 @@ struct DeviceConfig {
   char fritzbox_host[64];
   char api_key[160];
   char web_menu_password[64];
+  char telegram_bot_token[64];
+  char telegram_chat_id[32];
+  int alert_loss_threshold_pct;
+  int alert_temp_threshold_pct;
+  int telegram_digest_interval_min;
+  bool telegram_dnd_enabled;
+  int telegram_dnd_start_hour;
+  int telegram_dnd_end_hour;
 };
 
 class ConfigManager {
@@ -34,7 +42,15 @@ class ConfigManager {
   void setFritzboxHost(const char* host);
   void setApiKey(const char* key);
   void setWebMenuPassword(const char* password);
-  
+  void setTelegramBotToken(const char* token);
+  void setTelegramChatId(const char* chatId);
+  void setAlertLossThresholdPct(int pct);
+  void setAlertTempThresholdPct(int pct);
+  void setTelegramDigestIntervalMin(int minutes);
+  void setTelegramDndEnabled(bool enabled);
+  void setTelegramDndStartHour(int hour);
+  void setTelegramDndEndHour(int hour);
+
   // Clear all config
   void clearConfig();
   

@@ -17,3 +17,7 @@ bool containsIgnoreCase(String haystack, String needle);
 void pushTrafficSample(float rxKbps, float txKbps);
 bool looksLikeRttValue(const String &value);
 String normalizeRttOneDecimal(const String &value);
+
+// Traffic history persistence (NVS-backed, survives reboot/OTA)
+void loadTrafficHistory();
+void clearTrafficHistory();

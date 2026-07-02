@@ -5,6 +5,7 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 
+#include "alerts.h"
 #include "config_portal.h"
 #include "config_manager.h"
 #include "assets/project_logo_png.h"
@@ -90,11 +91,15 @@ void setStepText(lv_obj_t *label, const char *name, BootStepState state, const c
 
 bool tryApiCheckHttp(const String &url) {
   // Lightweight probe used by boot sequence to validate host quickly.
+  // Kept tight since this runs synchronously on the boot/UI thread - a
+  // slow/unreachable host would otherwise block the display for several
+  // seconds with no visual feedback.
   WiFiClient client;
   HTTPClient http;
   if (!http.begin(client, url)) {
     return false;
   }
+  http.setConnectTimeout(1500);
   http.setTimeout(1500);
   int code = http.GET();
   http.end();
@@ -105,12 +110,13 @@ bool tryApiCheckHttps(const String &url) {
   // TLS probe first; cert checks are intentionally relaxed for local appliances.
   WiFiClientSecure client;
   client.setInsecure();
-  client.setHandshakeTimeout(6);
+  client.setHandshakeTimeout(3);
   HTTPClient http;
   if (!http.begin(client, url)) {
     return false;
   }
-  http.setTimeout(1800);
+  http.setConnectTimeout(1500);
+  http.setTimeout(1500);
   int code = http.GET();
   http.end();
   return code == HTTP_CODE_OK;
@@ -187,6 +193,7 @@ String buildCustomMenuHtml(bool firstRun) {
   }
 
   String html;
+  html += "<form style='margin:0 0 10px 0' action='/telegram-settings' method='get'><button>Telegram Settings</button></form>";
   html += "<form style='margin:0 0 10px 0' action='/factory-erase' method='post' onsubmit=\"return confirm('Erase all saved config and reboot?');\">";
   html += "<button style='background:#b00020;color:#fff'>Config Erase</button></form>";
   html += "<form style='margin:0 0 10px 0' action='/firmware-update' method='get'><button>Firmware Update</button></form>";
@@ -335,6 +342,65 @@ String buildFirmwareUpdatePage(const FirmwareReleaseInfo &info, const String &me
     html += "<form onsubmit='return startFirmwareInstall();'><button class='D fw-install-btn' type='submit'>Download & Flash Latest Release</button></form>";
   } else if (WiFi.status() != WL_CONNECTED) {
     html += "<div class='msg D'><strong>WiFi is not connected.</strong><br/>Firmware updates need network access.</div>";
+  }
+
+  html += "<hr><br/><form action='/' method='get'><button type='submit'>Back to Menu</button></form>";
+  html += "</div></body></html>";
+  return html;
+}
+
+String buildTelegramSettingsPage(const String &notice = String(), bool noticeSuccess = false) {
+  const DeviceConfig& cfg = ConfigManager::getInstance().getConfig();
+
+  String html;
+  html.reserve(5500);
+  html += "<!DOCTYPE html><html lang='en'><head>";
+  html += "<meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1,user-scalable=no'/>";
+  html += "<title>Telegram Settings</title><style>";
+  html += buildFirmwareUpdateStyles();
+  html += "label{display:block;font-weight:bold;margin-top:10px}";
+  html += "</style></head><body><div class='wrap'>";
+  html += buildPortalHeaderHtml("Telegram Settings");
+
+  if (notice.length() > 0) {
+    html += "<div class='msg ";
+    html += noticeSuccess ? "S'" : "D'";
+    html += "><strong>";
+    html += noticeSuccess ? "Status" : "Notice";
+    html += "</strong><br/>";
+    html += escapeHtml(notice);
+    html += "</div>";
+  }
+
+  html += "<form method='POST' action='/telegram-settings'>";
+  html += "<label for='tg_bot_token'>Bot Token</label><input id='tg_bot_token' name='tg_bot_token' maxlength='63' value='";
+  html += escapeHtml(String(cfg.telegram_bot_token));
+  html += "'>";
+  html += "<label for='tg_chat_id'>Chat ID</label><input id='tg_chat_id' name='tg_chat_id' maxlength='31' value='";
+  html += escapeHtml(String(cfg.telegram_chat_id));
+  html += "'>";
+  html += "<label for='alert_loss_pct'>Alert: Packet Loss above (%)</label><input id='alert_loss_pct' type='number' min='0' max='100' name='alert_loss_pct' value='";
+  html += String(cfg.alert_loss_threshold_pct);
+  html += "'>";
+  html += "<label for='alert_temp_pct'>Alert: Temperature above (%)</label><input id='alert_temp_pct' type='number' min='0' max='100' name='alert_temp_pct' value='";
+  html += String(cfg.alert_temp_threshold_pct);
+  html += "'>";
+  html += "<label for='tg_digest_min'>Status digest interval (minutes)</label><input id='tg_digest_min' type='number' min='1' max='1440' name='tg_digest_min' value='";
+  html += String(cfg.telegram_digest_interval_min);
+  html += "'>";
+  html += "<label style='margin-top:16px'><input type='checkbox' style='width:auto;display:inline-block' name='tg_dnd_on' ";
+  html += cfg.telegram_dnd_enabled ? "checked" : "";
+  html += "> Quiet hours (mutes the digest only, alerts still come through)</label>";
+  html += "<label for='tg_dnd_start'>Quiet hours start (0-23)</label><input id='tg_dnd_start' type='number' min='0' max='23' name='tg_dnd_start' value='";
+  html += String(cfg.telegram_dnd_start_hour);
+  html += "'>";
+  html += "<label for='tg_dnd_end'>Quiet hours end (0-23)</label><input id='tg_dnd_end' type='number' min='0' max='23' name='tg_dnd_end' value='";
+  html += String(cfg.telegram_dnd_end_hour);
+  html += "'>";
+  html += "<button type='submit' style='margin-top:14px'>Save</button></form>";
+
+  if (strlen(cfg.telegram_bot_token) > 0 && strlen(cfg.telegram_chat_id) > 0) {
+    html += "<form method='POST' action='/telegram-settings/test' style='margin-top:10px'><button>Send Status Now</button></form>";
   }
 
   html += "<hr><br/><form action='/' method='get'><button type='submit'>Back to Menu</button></form>";
@@ -513,6 +579,10 @@ void dismissBootScreenIfConnected() {
   // Retry failed API checks periodically while overlay is still visible.
   if (bootHasHostConfig && wifiOk && (!bootApiChecked || (!bootApiReachableState && (millis() - bootLastApiCheckMs) >= kBootApiRetryMs))) {
     setStepText(bootStepApi, "TR-064", BootStepState::Pending, "checking host");
+    // Flush this state to the display before the blocking network call below -
+    // otherwise the "checking host" text never actually renders and the
+    // screen looks frozen for the whole check instead of visibly retrying.
+    lv_timer_handler();
     bootApiReachableState = isApiReachable();
     bootApiChecked = true;
     bootLastApiCheckMs = millis();
@@ -594,6 +664,38 @@ void setupPortalRoutes() {
   };
 
   wm.server->on("/factory-erase", HTTP_POST, eraseAllAndReboot);
+
+  wm.server->on("/telegram-settings", HTTP_GET, []() {
+    if (!wm.handleRequest()) {
+      return;
+    }
+    wm.server->send(200, "text/html", buildTelegramSettingsPage());
+  });
+
+  wm.server->on("/telegram-settings", HTTP_POST, []() {
+    if (!wm.handleRequest()) {
+      return;
+    }
+    ConfigManager& cfg = ConfigManager::getInstance();
+    cfg.setTelegramBotToken(wm.server->arg("tg_bot_token").c_str());
+    cfg.setTelegramChatId(wm.server->arg("tg_chat_id").c_str());
+    cfg.setAlertLossThresholdPct(wm.server->arg("alert_loss_pct").toInt());
+    cfg.setAlertTempThresholdPct(wm.server->arg("alert_temp_pct").toInt());
+    cfg.setTelegramDigestIntervalMin(wm.server->arg("tg_digest_min").toInt());
+    cfg.setTelegramDndEnabled(wm.server->hasArg("tg_dnd_on"));
+    cfg.setTelegramDndStartHour(wm.server->arg("tg_dnd_start").toInt());
+    cfg.setTelegramDndEndHour(wm.server->arg("tg_dnd_end").toInt());
+    cfg.saveConfig();
+    wm.server->send(200, "text/html", buildTelegramSettingsPage("Settings saved.", true));
+  });
+
+  wm.server->on("/telegram-settings/test", HTTP_POST, []() {
+    if (!wm.handleRequest()) {
+      return;
+    }
+    bool sent = sendStatusDigestNow();
+    wm.server->send(200, "text/html", buildTelegramSettingsPage(sent ? "Status sent to Telegram." : "Send failed - check bot token/chat ID and WiFi.", sent));
+  });
 
   wm.server->on("/firmware-update", HTTP_GET, []() {
     if (!wm.handleRequest()) {
@@ -787,8 +889,16 @@ void configureWiFi() {
     return;
   }
   setStepText(bootStepWifi, "WiFi", BootStepState::Ok, WiFi.localIP().toString().c_str());
+  // Flush before the blocking calls below (NTP kickoff is fire-and-forget and
+  // fast, but the Telegram boot notification and API check both do network
+  // I/O with no other UI updates in between - without this the screen would
+  // sit on the previous frame and look frozen for their combined duration).
+  lv_timer_handler();
+  ensureTimeSynced();
+  sendBootNotification();
 
   setStepText(bootStepApi, "TR-064", BootStepState::Pending, "checking host");
+  lv_timer_handler();
   bool apiReachable = isApiReachable();
   bootApiChecked = true;
   bootApiReachableState = apiReachable;
