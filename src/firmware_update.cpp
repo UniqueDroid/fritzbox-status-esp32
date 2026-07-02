@@ -110,7 +110,13 @@ String pickAssetUrl(const JsonArray &assets, String &assetName, size_t &assetSiz
 
     String lowerName = name;
     lowerName.toLowerCase();
-    if (lowerName.endsWith(".bin")) {
+    // Releases also carry bootloader/partition-table images for the web
+    // flasher (which needs them to flash a blank chip); those also end in
+    // ".bin" and must not be mistaken for the app firmware here.
+    bool isFlasherOnlyAsset = lowerName.indexOf("bootloader") >= 0 ||
+                              lowerName.indexOf("partitions") >= 0 ||
+                              lowerName.indexOf("boot_app0") >= 0;
+    if (lowerName.endsWith(".bin") && !isFlasherOnlyAsset) {
       assetName = name;
       assetSize = size;
       assetDigest = digest;

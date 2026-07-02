@@ -55,9 +55,22 @@ jobs:
         run: |
           cp .pio/build/lilygo-t-display-s3/firmware.bin fritzbox-status-esp32-lilygo-t-display-s3-${GITHUB_REF_NAME}.bin
 
+      - name: Prepare web-flasher assets (bootloader/partitions, stable names)
+        shell: bash
+        run: |
+          # Version-agnostic filenames so unique-esp-web-flasher's manifest can
+          # reference them via /releases/latest/download/... without ever
+          # needing an update. Kept separate from the versioned app firmware
+          # asset above, which the device's own OTA updater looks for.
+          cp .pio/build/lilygo-t-display-s3/bootloader.bin fritzbox-status-esp32-lilygo-t-display-s3-bootloader.bin
+          cp .pio/build/lilygo-t-display-s3/partitions.bin fritzbox-status-esp32-lilygo-t-display-s3-partitions.bin
+
       - name: Create or update release
         uses: softprops/action-gh-release@v2
         with:
-          files: fritzbox-status-esp32-lilygo-t-display-s3-${{ github.ref_name }}.bin
+          files: |
+            fritzbox-status-esp32-lilygo-t-display-s3-${{ github.ref_name }}.bin
+            fritzbox-status-esp32-lilygo-t-display-s3-bootloader.bin
+            fritzbox-status-esp32-lilygo-t-display-s3-partitions.bin
           generate_release_notes: true
           fail_on_unmatched_files: true
