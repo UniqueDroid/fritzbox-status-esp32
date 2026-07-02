@@ -548,6 +548,7 @@ void initDashboard() {
       const TickType_t xInterval = pdMS_TO_TICKS(kPollMs);
       TickType_t xLastWake = xTaskGetTickCount();
       uint32_t lastReleaseCheckMs = 0;
+      bool firstReleaseCheckDone = false;
       for (;;) {
         vTaskDelayUntil(&xLastWake, xInterval);
         if (WiFi.status() != WL_CONNECTED) continue;
@@ -560,7 +561,11 @@ void initDashboard() {
           checkTelegramCommands();
           updateDailyStats();
           checkAndSendDailySummary();
-          if ((millis() - lastReleaseCheckMs) >= 15UL * 60UL * 1000UL) {
+          // Check once shortly after boot (not just every 15 min from a
+          // zero-initialized timer, which used to delay the very first
+          // check - and therefore the update badge/notification - by a
+          // full 15 minutes after every reboot).
+          if (!firstReleaseCheckDone || (millis() - lastReleaseCheckMs) >= 15UL * 60UL * 1000UL) {
             FirmwareReleaseInfo releaseInfo;
             String errorMessage;
             if (fetchLatestFirmwareRelease(releaseInfo, errorMessage)) {
@@ -568,6 +573,7 @@ void initDashboard() {
               checkAndNotifyFirmwareUpdate(releaseInfo.updateAvailable, releaseInfo.latestVersion);
             }
             lastReleaseCheckMs = millis();
+            firstReleaseCheckDone = true;
           }
           xSemaphoreGive(xApiMutex);
           apiDataReady = true;
