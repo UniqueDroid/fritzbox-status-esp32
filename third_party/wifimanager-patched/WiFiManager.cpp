@@ -1331,7 +1331,7 @@ bool WiFiManager::handleRequest() {
     }
 
     String page = getHTTPHead(_title);
-    page += F("<h3># pfSene Firewall Status</h3><hr>");
+    page += "<h3>" + _title + "</h3><hr>";
     if (server->method() == HTTP_POST && !loginOk) {
       page += F("<div class='msg D'>Wrong password</div>");
     }

@@ -798,7 +798,7 @@ void configureWiFi() {
 /* Unique ESP32 Flasher theme, applied to WiFiManager's native pages.
    Comes after WiFiManager's own HTTP_STYLE in the page <head>, so equal-
    specificity rules here win without needing !important. */
-body{background:radial-gradient(ellipse 900px 500px at 50% -10%,#0d2338,transparent) #070c13;color:#e7f3fb}
+body{background:radial-gradient(ellipse 900px 500px at 50% -10%,#0d2338,transparent) #070c13;color:#e7f3fb;font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif}
 h1,h2,h3{color:#e7f3fb}
 a{color:#4fc3f7}
 a:hover{color:#7dd8fb}
