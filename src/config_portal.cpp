@@ -193,11 +193,11 @@ String buildCustomMenuHtml(bool firstRun) {
   }
 
   String html;
-  html += "<form style='margin:0 0 10px 0' action='/telegram-settings' method='get'><button>Telegram Settings</button></form>";
-  html += "<form style='margin:0 0 10px 0' action='/factory-erase' method='post' onsubmit=\"return confirm('Erase all saved config and reboot?');\">";
+  html += "<form action='/telegram-settings' method='get'><button>Telegram Settings</button></form>";
+  html += "<form action='/factory-erase' method='post' onsubmit=\"return confirm('Erase all saved config and reboot?');\">";
   html += "<button style='background:#b00020;color:#fff'>Config Erase</button></form>";
-  html += "<form style='margin:0 0 10px 0' action='/firmware-update' method='get'><button>Firmware Update</button></form>";
-  html += "<form style='margin:0 0 10px 0' action='/logout' method='get'><button>Logout</button></form>";
+  html += "<form action='/firmware-update' method='get'><button>Firmware Update</button></form>";
+  html += "<form action='/logout' method='get'><button>Logout</button></form>";
   return html;
 }
 
@@ -235,7 +235,7 @@ String buildFirmwareUpdateStyles() {
   css += ":root{--accent:#4fc3f7;--accent-2:#0f6fa8;--spark:#ff8f3d;--bg:#070c13;--bg-grad:#0d2338;--surface:#101823;--border:#22303f;--text:#e7f3fb;--text-mute:#a9bcca;--warn:#f5a93c;--ok:#4ade80;--bad:#dc3630}";
   css += ".c,body{text-align:center;font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background:radial-gradient(ellipse 900px 500px at 50% -10%,var(--bg-grad),transparent) var(--bg);color:var(--text)}div,input,select{padding:5px;font-size:1em;margin:5px 0;box-sizing:border-box}";
   css += "input,select{border-radius:10px;width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);margin:8px 0}";
-  css += "button{border-radius:999px;width:100%;cursor:pointer;border:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0d1015;font-weight:600;line-height:2.4rem;font-size:1.2rem;margin:8px 0}";
+  css += "button{border-radius:999px;width:100%;cursor:pointer;border:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0d1015;font-weight:600;line-height:2.4rem;font-size:1.2rem;margin:6px 0}";
   css += "button.D{background:var(--bad);color:#fff}.wrap{text-align:left;display:inline-block;min-width:260px;max-width:500px}";
   css += "hr{border:none;border-top:1px solid var(--border);margin:18px 0}";
   css += ".brand{display:flex;justify-content:center;align-items:center;min-height:64px;margin:6px 0 4px 0}.brand-logo{display:block;max-width:min(100%,320px);height:auto;margin:0 auto}.brand-title{margin:0;line-height:1.1;color:var(--text)}body.haslogo .brand-title{display:none}";
@@ -804,7 +804,7 @@ h1,h2,h3{color:#e7f3fb}
 a{color:#4fc3f7}
 a:hover{color:#7dd8fb}
 input,select{background:#101823;border:1px solid #22303f;color:#e7f3fb;border-radius:10px;margin:8px 0}
-button,input[type='button'],input[type='submit']{background:linear-gradient(135deg,#4fc3f7,#0f6fa8);color:#0d1015;font-weight:600;border-radius:999px;margin:14px 0}
+button,input[type='button'],input[type='submit']{background:linear-gradient(135deg,#4fc3f7,#0f6fa8);color:#0d1015;font-weight:600;border-radius:999px;margin:6px 0}
 button.D{background:#dc3630;color:#fff}
 .msg{background:#101823;border:1px solid #22303f;border-left-width:5px;border-radius:10px;color:#a9bcca}
 .msg.P{border-left-color:#4fc3f7}
