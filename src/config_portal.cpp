@@ -228,17 +228,21 @@ String escapeJson(String text) {
 }
 
 String buildFirmwareUpdateStyles() {
+  // Matches the Unique ESP32 Flasher theme (cyan/blue circuit ring, warm
+  // orange accent, deep navy background).
   String css;
-  css.reserve(1800);
-  css += ".c,body{text-align:center;font-family:verdana}div,input,select{padding:5px;font-size:1em;margin:5px 0;box-sizing:border-box}";
-  css += "input,button,select,.msg{border-radius:.3rem;width:100%}button{cursor:pointer;border:0;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%}";
-  css += "button.D{background-color:#dc3630}.wrap{text-align:left;display:inline-block;min-width:260px;max-width:500px}";
-  css += ".brand{display:flex;justify-content:center;align-items:center;min-height:64px;margin:6px 0 4px 0}.brand-logo{display:block;max-width:min(100%,320px);height:auto;margin:0 auto}.brand-title{margin:0;line-height:1.1}body.haslogo .brand-title{display:none}";
-  css += "a{color:#000;font-weight:700;text-decoration:none}a:hover{color:#1fa3ec;text-decoration:underline}";
-  css += ".msg{padding:20px;margin:20px 0;border:1px solid #eee;border-left-width:5px;border-left-color:#777}";
-  css += ".msg.S{border-left-color:#5cb85c}.msg.D{border-left-color:#dc3630}.msg.P{border-left-color:#1fa3ec}";
-  css += "dt{font-weight:bold}dd{margin:0;padding:0 0 .5em 0;min-height:12px}";
-  css += ".progress-shell{margin:18px 0 14px 0}.progress-track{width:100%;height:14px;background:#dfe5ea;border-radius:999px;overflow:hidden;border:1px solid #c5d0d9;padding:0 !important;margin:0 !important}.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#1fa3ec,#5cb85c);border-radius:999px;transition:width .2s ease;padding:0 !important;margin:0 !important;display:block}.progress-shell.fail .progress-bar{background:#dc3630}.progress-text{font-size:.95em;color:#555;padding:0;margin:8px 0 0 0}";
+  css.reserve(2200);
+  css += ":root{--accent:#4fc3f7;--accent-2:#0f6fa8;--spark:#ff8f3d;--bg:#070c13;--bg-grad:#0d2338;--surface:#101823;--border:#22303f;--text:#e7f3fb;--text-mute:#a9bcca;--warn:#f5a93c;--ok:#4ade80;--bad:#dc3630}";
+  css += ".c,body{text-align:center;font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background:radial-gradient(ellipse 900px 500px at 50% -10%,var(--bg-grad),transparent) var(--bg);color:var(--text)}div,input,select{padding:5px;font-size:1em;margin:5px 0;box-sizing:border-box}";
+  css += "input,select{border-radius:10px;width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text)}";
+  css += "button{border-radius:999px;width:100%;cursor:pointer;border:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0d1015;font-weight:600;line-height:2.4rem;font-size:1.2rem}";
+  css += "button.D{background:var(--bad);color:#fff}.wrap{text-align:left;display:inline-block;min-width:260px;max-width:500px}";
+  css += ".brand{display:flex;justify-content:center;align-items:center;min-height:64px;margin:6px 0 4px 0}.brand-logo{display:block;max-width:min(100%,320px);height:auto;margin:0 auto}.brand-title{margin:0;line-height:1.1;color:var(--text)}body.haslogo .brand-title{display:none}";
+  css += "a{color:var(--accent);font-weight:700;text-decoration:none}a:hover{color:#7dd8fb;text-decoration:underline}";
+  css += ".msg{padding:20px;margin:20px 0;border:1px solid var(--border);border-radius:10px;border-left-width:5px;border-left-color:#777;background:var(--surface);color:var(--text-mute)}";
+  css += ".msg.S{border-left-color:var(--ok)}.msg.D{border-left-color:var(--bad)}.msg.P{border-left-color:var(--accent)}";
+  css += "dt{font-weight:bold;color:var(--text)}dd{margin:0;padding:0 0 .5em 0;min-height:12px}";
+  css += ".progress-shell{margin:18px 0 14px 0}.progress-track{width:100%;height:14px;background:var(--surface);border-radius:999px;overflow:hidden;border:1px solid var(--border);padding:0 !important;margin:0 !important}.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:999px;transition:width .2s ease;padding:0 !important;margin:0 !important;display:block}.progress-shell.fail .progress-bar{background:var(--bad)}.progress-text{font-size:.95em;color:var(--text-mute);padding:0;margin:8px 0 0 0}";
   return css;
 }
 
@@ -358,7 +362,7 @@ String buildTelegramSettingsPage(const String &notice = String(), bool noticeSuc
   html += "<meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1,user-scalable=no'/>";
   html += "<title>Telegram Settings</title><style>";
   html += buildFirmwareUpdateStyles();
-  html += "label{display:block;font-weight:bold;margin-top:10px}";
+  html += "label{display:block;font-weight:bold;margin-top:10px;color:var(--text)}";
   html += "</style></head><body><div class='wrap'>";
   html += buildPortalHeaderHtml("Telegram Settings");
 
@@ -659,7 +663,7 @@ void setupPortalRoutes() {
       return;
     }
     BOOTLOG("[BOOT] Factory erase requested\n");
-    wm.server->send(200, "text/html", "<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{font-family:verdana;text-align:center;padding:18px}.wm-brand{display:flex;justify-content:center;align-items:center;min-height:64px;margin:4px 0 10px 0}.wm-brand-logo{display:block;max-width:min(100%,320px);height:auto;margin:0 auto}</style></head><body><div class='wm-brand'><img class='wm-brand-logo' src='/project-logo.png' alt='Project logo'></div><p><strong>Config erased. Rebooting...</strong></p></body></html>");
+    wm.server->send(200, "text/html", "<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;text-align:center;padding:18px;background:radial-gradient(ellipse 900px 500px at 50% -10%,#0d2338,transparent) #070c13;color:#e7f3fb}.wm-brand{display:flex;justify-content:center;align-items:center;min-height:64px;margin:4px 0 10px 0}.wm-brand-logo{display:block;max-width:min(100%,320px);height:auto;margin:0 auto}</style></head><body><div class='wm-brand'><img class='wm-brand-logo' src='/project-logo.png' alt='Project logo'></div><p><strong>Config erased. Rebooting...</strong></p></body></html>");
     wm.server->client().stop();
     delay(600);
     ConfigManager::getInstance().clearConfig();
@@ -790,6 +794,21 @@ void configureWiFi() {
 <style>
 .wm-brand{display:flex;justify-content:center;align-items:center;min-height:64px;margin:6px 0 8px 0}
 .wm-brand-logo{display:block;max-width:min(100%,320px);height:auto;margin:0 auto}
+
+/* Unique ESP32 Flasher theme, applied to WiFiManager's native pages.
+   Comes after WiFiManager's own HTTP_STYLE in the page <head>, so equal-
+   specificity rules here win without needing !important. */
+body{background:radial-gradient(ellipse 900px 500px at 50% -10%,#0d2338,transparent) #070c13;color:#e7f3fb}
+h1,h2,h3{color:#e7f3fb}
+a{color:#4fc3f7}
+a:hover{color:#7dd8fb}
+input,select{background:#101823;border:1px solid #22303f;color:#e7f3fb;border-radius:10px}
+button,input[type='button'],input[type='submit']{background:linear-gradient(135deg,#4fc3f7,#0f6fa8);color:#0d1015;font-weight:600;border-radius:999px}
+button.D{background:#dc3630;color:#fff}
+.msg{background:#101823;border:1px solid #22303f;border-left-width:5px;border-radius:10px;color:#a9bcca}
+.msg.P{border-left-color:#4fc3f7}
+.msg.D{border-left-color:#dc3630}
+.msg.S{border-left-color:#4ade80}
 </style>
 <script>
 (function(){
