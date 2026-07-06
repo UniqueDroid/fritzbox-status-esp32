@@ -2095,7 +2095,7 @@ void WiFiManager::handleInfo() {
   page += F("<h3>FRITZ!Box Status</h3><hr><dl>");
   page += F("<dt>Project</dt><dd>FRITZ!Box Status</dd>");
   page += F("<dt>Maintainer</dt><dd>UniqueDroid</dd>");
-  page += F("<dt>Vibe-Code-Agent</dt><dd>Claude Code (Sonnet 5)</dd>");
+  page += F("<dt>Vibe-Code-Agent</dt><dd>Konrad (Claude Code Sonnet 5)</dd>");
   page += F("<dt>WiFiManager Credit</dt><dd>Based on WiFiManager by tzapu and tablatronix</dd>");
   page += getInfoData("aboutver");
   page += getInfoData("aboutdate");
