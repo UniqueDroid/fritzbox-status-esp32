@@ -120,31 +120,8 @@ const char HTTP_STYLE[]            PROGMEM = "<style>"
 
 #ifndef WM_NOHELP
 const char HTTP_HELP[]             PROGMEM =
- "<br/><h3>Available pages</h3><hr>"
- "<table class='table'>"
- "<thead><tr><th>Page</th><th>Function</th></tr></thead><tbody>"
- "<tr><td><a href='/'>/</a></td>"
- "<td>Menu page.</td></tr>"
- "<tr><td><a href='/wifi'>/wifi</a></td>"
- "<td>Show WiFi scan results and enter WiFi configuration.(/0wifi noscan)</td></tr>"
- "<tr><td><a href='/wifisave'>/wifisave</a></td>"
- "<td>Save WiFi configuration information and configure device. Needs variables supplied.</td></tr>"
- "<tr><td><a href='/param'>/param</a></td>"
- "<td>Parameter page</td></tr>"
- "<tr><td><a href='/info'>/info</a></td>"
- "<td>Information page</td></tr>"
- "<tr><td><a href='/u'>/u</a></td>"
- "<td>OTA Update</td></tr>"
- "<tr><td><a href='/close'>/close</a></td>"
- "<td>Close the captiveportal popup, config portal will remain active</td></tr>"
- "<tr><td>/exit</td>"
- "<td>Exit Config portal, config portal will close</td></tr>"
- "<tr><td>/restart</td>"
- "<td>Reboot the device</td></tr>"
- "<tr><td>/erase</td>"
- "<td>Erase WiFi configuration and reboot device. Device will not reconnect to a network until new WiFi configuration data is entered.</td></tr>"
- "</table>"
- "<p/>Github <a href='https://github.com/tzapu/WiFiManager'>https://github.com/tzapu/WiFiManager</a>.";
+ "<br/><h3>GitHub</h3><hr>"
+ "<p/>Github <a href='https://github.com/UniqueDroid/fritzbox-status-esp32/'>https://github.com/UniqueDroid/fritzbox-status-esp32/</a>.";
 #else
 const char HTTP_HELP[]             PROGMEM = "";
 #endif
@@ -220,7 +197,7 @@ const char HTTP_INFO_aboutarduino[] PROGMEM = "<dt>Arduino</dt><dd>{1}</dd>";
 const char HTTP_INFO_aboutsdk[]     PROGMEM = "<dt>ESP-SDK/IDF</dt><dd>{1}</dd>";
 const char HTTP_INFO_aboutdate[]    PROGMEM = "<dt>Build date</dt><dd>{1}</dd>";
 
-const char S_brand[]              PROGMEM = "FRITZ!Box Status | UniqueDroid | Bruno";
+const char S_brand[]              PROGMEM = "FRITZ!Box Status | UniqueDroid | Konrad";
 const char S_debugPrefix[]        PROGMEM = "*wm:";
 const char S_y[]                  PROGMEM = "Yes";
 const char S_n[]                  PROGMEM = "No";
